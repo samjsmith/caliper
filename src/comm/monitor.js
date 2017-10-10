@@ -66,9 +66,11 @@ var Monitor = class {
         .then(() => {
             this.started = true;
             this.statsupdated = false;
+            console.log('started monitor successfully');
             return Promise.resolve();
         })
         .catch((err) => {
+            console.log('could not start monitor, ' + (err.stack ? err.stack : err));
             return Promise.reject(err);
         })
     }

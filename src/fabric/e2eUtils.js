@@ -20,10 +20,6 @@
 var utils = require('fabric-client/lib/utils.js');
 var logger = utils.getLogger('E2E testing');
 
-var tape = require('tape');
-var _test = require('tape-promise');
-var test = _test(tape);
-
 var path = require('path');
 var fs = require('fs');
 var util = require('util');
@@ -50,7 +46,7 @@ module.exports.init = init;
 * @chaincode, {id: ..., path: ..., version: ...}
 * @t, tape object
 *********************/
-function installChaincode(org, chaincode, t) {
+function installChaincode(org, chaincode) {
 	Client.setConfigSetting('request-timeout', 60000);
 	var channel_name = chaincode.channel;
 
@@ -101,7 +97,7 @@ function installChaincode(org, chaincode, t) {
 		client.setStateStore(store);
 
 		// get the peer org's admin required to send install chaincode requests
-		return testUtil.getSubmitter(client, t, true /* get peer org admin */, org);
+		return testUtil.getSubmitter(client, true /* get peer org admin */, org);
 	}).then((admin) => {
 		the_user = admin;
 
@@ -139,14 +135,13 @@ function installChaincode(org, chaincode, t) {
 		throw new Error('Failed to send install proposal due to error: ' + (err.stack ? err.stack : err));
 	})
 	.catch((err) => {
-	    t.fail('failed to install chaincode, ' + (err.stack ? err.stack : err));
 	    return Promise.reject(err);
 	});
 }
 module.exports.installChaincode = installChaincode;
 
 
-function instantiateChaincode(chaincode, endorsement_policy, upgrade, t){
+function instantiateChaincode(chaincode, endorsement_policy, upgrade){
 	Client.setConfigSetting('request-timeout', 120000);
 
     var channel = testUtil.getChannel(chaincode.channel);
@@ -160,20 +155,7 @@ function instantiateChaincode(chaincode, endorsement_policy, upgrade, t){
 		eventhubs = [];
 	var type = 'instantiate';
 	if(upgrade) type = 'upgrade';
-	// override t.end function so it'll always disconnect the event hub
-	t.end = ((context, ehs, f) => {
-		return function() {
-			for(var key in ehs) {
-				var eventhub = ehs[key];
-				if (eventhub && eventhub.isconnected()) {
-					logger.debug('Disconnecting the event hub');
-					eventhub.disconnect();
-				}
-			}
-			f.apply(context, arguments);
-		};
-	})(t, eventhubs, t.end);
-
+	
 	var client  = new Client();
 	var channel = client.newChannel(channel_name);
 
@@ -204,7 +186,7 @@ function instantiateChaincode(chaincode, endorsement_policy, upgrade, t){
 	}).then((store) => {
 
 		client.setStateStore(store);
-		return testUtil.getSubmitter(client, t, true /* use peer org admin*/, userOrg);
+		return testUtil.getSubmitter(client, true /* use peer org admin*/, userOrg);
 
 	}).then((admin) => {
 		the_user = admin;
@@ -248,7 +230,6 @@ function instantiateChaincode(chaincode, endorsement_policy, upgrade, t){
 		return channel.initialize();
 	}, (err) => {
 		throw new Error('Failed to enroll user \'admin\'. ' + err);
-
 	}).then(() => {
 
 		// the v1 chaincode has Init() method that expects a transient map
@@ -263,7 +244,6 @@ function instantiateChaincode(chaincode, endorsement_policy, upgrade, t){
 
 			return channel.sendInstantiateProposal(request);
 		}
-
 	}, (err) => {
 		throw new Error('Failed to initialize the channel'+ (err.stack ? err.stack : err));
 	}).then((results) => {
@@ -303,10 +283,10 @@ function instantiateChaincode(chaincode, endorsement_policy, upgrade, t){
 						eh.unregisterTxEvent(deployId);
 
 						if (code !== 'VALID') {
-							t.fail('The chaincode ' + type + ' transaction was invalid, code = ' + code);
+							console.log('The chaincode ' + type + ' transaction was invalid, code = ' + code);
 							reject();
 						} else {
-							t.pass('The chaincode ' + type + ' transaction was valid.');
+							console.log('The chaincode ' + type + ' transaction was valid.');
 							resolve();
 						}
 					});
@@ -340,7 +320,6 @@ function instantiateChaincode(chaincode, endorsement_policy, upgrade, t){
 		throw new Error('Failed to send instantiate due to error: ' + (err.stack ? err.stack : err));
 	})
 	.catch((err) => {
-	    t.fail('failed to instantiate chaincode, ' + (err.stack ? err.stack : err));
 	    return Promise.reject(err);
 	});
 };
@@ -531,6 +510,7 @@ function invokebycontext(context, id, version, args, timeout){
 
 	return channel.sendTransactionProposal(request)
 	.then((results) =>{
+		console.log('#### let result ', results);
 		pass_results = results;
 		invoke_status.time_endorse = process.uptime();
 		var proposalResponses = pass_results[0];

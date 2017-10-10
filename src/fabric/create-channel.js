@@ -22,10 +22,6 @@ require('nconf').reset();
 var utils = require('fabric-client/lib/utils.js');
 var logger = utils.getLogger('E2E create-channel');
 
-var tape = require('tape');
-var _test = require('tape-promise');
-var test = _test(tape);
-
 var Client = require('fabric-client');
 var util = require('util');
 var fs = require('fs');
@@ -44,7 +40,6 @@ function run(config_path) {
             return Promise.resolve();
         }
 
-        test('\n\n***** create channels  *****\n\n', function(t) {
             var ORGS = fabric.network;
             var caRootsPath = ORGS.orderer.tls_cacerts;
             var data = fs.readFileSync(path.join(__dirname, '../..', caRootsPath));
@@ -53,7 +48,7 @@ function run(config_path) {
 
             return channels.reduce((prev, channel)=>{
                 return prev.then(()=>{
-                    t.comment('create ' + channel.name + '......');
+                    console.log('create ' + channel.name + '......');
 
                     // Acting as a client in first org when creating the channel
                     let client = new Client();
@@ -77,7 +72,7 @@ function run(config_path) {
                         var cryptoSuite = Client.newCryptoSuite();
                         cryptoSuite.setCryptoKeyStore(Client.newCryptoKeyStore({path: testUtil.storePathForOrg(org)}));
                         client.setCryptoSuite(cryptoSuite);
-                        return testUtil.getOrderAdminSubmitter(client, t);
+                        return testUtil.getOrderAdminSubmitter(client);
                     })
                     .then((admin) =>{
                         // use the config update created by the configtx tool
@@ -90,7 +85,7 @@ function run(config_path) {
                         return channel.organizations.reduce(function(prev, item){
                             return prev.then(() => {
                                 client._userContext = null;
-                                return testUtil.getSubmitter(client, t, true, item).then((orgAdmin) =>{
+                                return testUtil.getSubmitter(client, true, item).then((orgAdmin) =>{
                                     // sign the config
                                     let signature = client.signChannelConfig(config);
                                     // TODO: signature counting against policies on the orderer
@@ -104,7 +99,7 @@ function run(config_path) {
                         }, Promise.resolve())
                         .then(()=>{
                             client._userContext = null;
-                            return testUtil.getOrderAdminSubmitter(client, t);
+                            return testUtil.getOrderAdminSubmitter(client);
                         })
                         .then((orderAdmin) => {
                             // sign the config
@@ -132,7 +127,6 @@ function run(config_path) {
                         })
                         .then((result) => {
                             if(result.status && result.status === 'SUCCESS') {
-                                t.pass('created ' + channel.name + ' successfully');
                                 return Promise.resolve();
                             }
                             else {
@@ -143,22 +137,15 @@ function run(config_path) {
                 })
             }, Promise.resolve())
             .then(()=>{
-                t.comment('Sleep 5s......');
                 return e2eUtils.sleep(5000);
             })
             .then(() => {
-                t.end();
                 return resolve();
             })
             .catch((err) => {
-                t.fail('Failed to create channels ' + (err.stack?err.stack:err));
-                t.end();
-                return reject(new Error('Fabric: Create channel failed'));
+                return reject(err);
             });
-        });
-    });
+        });    
 }
 
 module.exports.run = run;
-
-

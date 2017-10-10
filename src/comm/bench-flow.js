@@ -10,6 +10,7 @@
 'use strict'
 
 /* global variables */
+var filesys = require('fs');
 var childProcess = require('child_process');
 var exec = childProcess.exec;
 var path = require('path');
@@ -75,7 +76,7 @@ module.exports.run = function(config_path) {
     var startPromise = new Promise((resolve, reject) => {
         let config = require(config_path);
         if (config.hasOwnProperty('command') && config.command.hasOwnProperty('start')){
-            console.log(config.command.start);
+            
             let child = exec(config.command.start, (err, stdout, stderr) => {
                 if (err) {
                     return reject(err);
@@ -97,24 +98,20 @@ module.exports.run = function(config_path) {
         return blockchain.installSmartContract();
     })
     .then( () => {
-
-        monitor.start().then(()=>{
-            console.log('started monitor successfully');
-        })
-        .catch( (err) => {
-            console.log('could not start monitor, ' + (err.stack ? err.stack : err));
-        });
-
+        monitor.start();
+    })
+    .then( () => {
+    
         var allTests  = require(config_path).test.rounds;
         var clientNum = require(config_path).test.clients;
         var testIdx   = 0;
-        var testNum   = allTests.length;
+        var testNum   = allTests.length;        
         return allTests.reduce( (prev, item) => {
             return prev.then( () => {
                 ++testIdx;
                 return defaultTest(item, clientNum, (testIdx === testNum))
             });
-        }, Promise.resolve());
+        }, Promise.resolve());                
     })
     .then( () => {
         console.log('----------finished test----------\n');
@@ -144,11 +141,13 @@ module.exports.run = function(config_path) {
 */
 function defaultTest(args, clientNum, final) {
     return new Promise( function(resolve, reject) {
-        var title = '\n\n**** End-to-end flow: testing \'' + args.cmd + '\' ****';
+        var title = '\n\n**** End-to-end flow: testing \'' + args.cmd + '\' ****';        
+        console.log(title);
         test(title, (t) => {
             var testCmd     = args.cmd;
             var testRounds  = args.txNumbAndTps;
             var tests = []; // array of all test rounds
+            
             for(let i = 0 ; i < testRounds.length ; i++) {
                 let txPerClient  = Math.floor(testRounds[i][0] / clientNum);
                 let tpsPerClient = Math.floor(testRounds[i][1] / clientNum);
@@ -177,7 +176,7 @@ function defaultTest(args, clientNum, final) {
                 }
                 tests.push(msg);
             }
-
+            
             var testIdx = 0;
             return tests.reduce( function(prev, item) {
                 return prev.then( () => {
@@ -242,7 +241,7 @@ function loadProcess(msg, t) {
             }
             if(message.cmd === 'error') {
                 reject('client encountered error, ' + message.data);
-            }
+            }            
             child.kill();
         });
 

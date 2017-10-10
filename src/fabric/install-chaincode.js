@@ -22,10 +22,6 @@
 var utils = require('fabric-client/lib/utils.js');
 var logger = utils.getLogger('E2E install-chaincode');
 
-var tape = require('tape');
-var _test = require('tape-promise');
-var test = _test(tape);
-
 var e2eUtils = require('./e2eUtils.js');
 var testUtil = require('./util.js');
 var Client   = require('fabric-client');
@@ -39,33 +35,27 @@ module.exports.run = function (config_path) {
         return Promise.resolve();
     }
     return new Promise(function(resolve, reject) {
-        test('\n\n***** install all chaincodes *****\n\n', (t) => {
-            chaincodes.reduce(function(prev, chaincode){
-                return prev.then(() => {
-                    let promises = [];
-                    let channel  = testUtil.getChannel(chaincode.channel);
-                    if(channel === null) {
-                        throw new Error('could not find channel in config');
-                    }
-                    for(let v in channel.organizations) {
-                        promises.push(e2eUtils.installChaincode(channel.organizations[v], chaincode, t));
-                    }
+        chaincodes.reduce(function(prev, chaincode){
+            return prev.then(() => {
+                let promises = [];
+                let channel  = testUtil.getChannel(chaincode.channel);
+                if(channel === null) {
+                    throw new Error('could not find channel in config');
+                }
+                for(let v in channel.organizations) {
+                    promises.push(e2eUtils.installChaincode(channel.organizations[v], chaincode));
+                }
 
-                    return Promise.all(promises).then(() => {
-                        t.pass('Installed chaincode ' + chaincode.id +  ' successfully in all peers');
-                        return Promise.resolve();
-                    })
-                });
-            }, Promise.resolve())
-            .then(() => {
-                t.end();
-                return resolve();
-            })
-            .catch((err) => {
-                t.fail('Failed to install chaincodes, ' + (err.stack?err.stack:err));
-                t.end();
-                return reject(err);
+                return Promise.all(promises).then(() => {
+                    return Promise.resolve();
+                })
             });
+        }, Promise.resolve())
+        .then(() => {
+            return resolve();
+        })
+        .catch((err) => {
+            return reject(err);
         });
     });
 }

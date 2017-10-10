@@ -1,7 +1,7 @@
 {
   "blockchain": {
-    "type": "fabric",
-    "config": "./fabric.json"
+    "type": "composer",
+    "config": "./composer.json"
   },
   "command" : {
     "start": "docker-compose -f ../../network/fabric/simplenetwork/docker-compose.yaml up -d",
@@ -10,10 +10,10 @@
   "test": {
     "clients": 1,
     "rounds": [{
-        "cmd" : "open",
-        "txNumbAndTps" : [[100,100]],
-        "arguments": {  "money": 10000 },
-        "callback" : "benchmark/simple/open.js"
+        "cmd" : "vehicle-lifecycle-network",
+        "txNumbAndTps" : [[20,1]],
+        "arguments": {"testAssets": 20, "transaction": "scrapVehicle"},
+        "callback" : "benchmark/composer/composer-samples/vehicle-lifecycle-network.js"
       }]
   },
   "monitor": {

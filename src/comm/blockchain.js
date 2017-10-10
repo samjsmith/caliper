@@ -22,6 +22,10 @@ var Blockchain = class {
             var sawtooth = require('../sawtooth/sawtooth.js')
             this.bcObj = new sawtooth(path.join(path.dirname(configPath), args.config));
         }
+        else if(this.bcType === 'composer') {
+            var composer = require('../composer/composer.js')
+            this.bcObj = new composer(path.join(path.dirname(configPath), args.config));
+        }
         else {
             throw new Error('Unknown blockchain type, ' + this.bcType);
         }

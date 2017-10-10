@@ -22,10 +22,6 @@
 var utils = require('fabric-client/lib/utils.js');
 var logger = utils.getLogger('E2E instantiate-chaincode');
 
-var tape = require('tape');
-var _test = require('tape-promise');
-var test = _test(tape);
-
 var e2eUtils = require('./e2eUtils.js');
 var Client   = require('fabric-client')
 
@@ -39,27 +35,21 @@ module.exports.run = function (config_path) {
     }
 
     return new Promise(function(resolve, reject) {
-        test('\n\n***** instantiate chaincode *****\n\n', (t) => {
             chaincodes.reduce(function(prev, chaincode){
                 return prev.then(() => {
-                    return e2eUtils.instantiateChaincode(chaincode, policy, false, t).then(() => {
-                        t.pass('Instantiated chaincode ' + chaincode.id + ' successfully ');
-                        t.comment('Sleep 5s...');
+                    return e2eUtils.instantiateChaincode(chaincode, policy, false).then(() => {
+                        console.log('Sleep 5s...');
                         return sleep(5000);
                     });
                 });
             }, Promise.resolve())
             .then(() => {
-                t.end();
                 return resolve();
             })
             .catch((err) => {
-                t.pass('Failed to instantiate chaincodes, ' + (err.stack?err.stack:err));
-                t.end();
-                return reject(new Error('Fabric: Create channel failed'));
+                return reject(err);
             });
         });
-    });
 };
 
 function sleep(ms) {
