@@ -19,4 +19,5 @@ else {
 
 // use default framework to run the tests
 var framework = require('../../src/comm/bench-flow.js');
+console.log('Using Config Path: ', config_path);
 framework.run(config_path);
