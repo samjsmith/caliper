@@ -59,7 +59,7 @@
           "organizations": ["org1", "org2"]
         }
       ],
-      "chaincodes": [{"id": "dtc-network", "path": "contract/composer/bna", "orgs": ["org1", "org2"], "loglevel": "INFO"}],
+      "chaincodes": [{"id": "vehicle-lifecycle-network", "path": "contract/composer/bna", "orgs": ["org1", "org2"], "loglevel": "DEBUG"}],
       "endorsement-policy": {
         "identities": [
           {

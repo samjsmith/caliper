@@ -97,12 +97,10 @@ function doTest(msg) {
 */
 function rateControl(timePerTx, start, txSeq) {
     if(timePerTx === 0) {
-        console.log('tpx =0');
         return Promise.resolve();
     }
     var diff = Math.floor(timePerTx * txSeq - (process.uptime() - start)*1000);
     if( diff > 10) {
-        console.log('sleeping')
         return sleep(diff);
     }
     else {
